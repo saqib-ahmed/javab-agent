@@ -1,0 +1,53 @@
+*********************************
+*** JAVAB License Information ***
+*********************************
+***
+***	--- This file is a REQUIRED part of JAVAB ---
+***
+*** This prototype bytecode parallelization tool has been developed
+*** at the Indiana University by Aart J.C. Bik. This software is *not* 
+*** in the public domain.  However, it is freely available without
+*** fee for education, research, and non-profit purposes. By obtaining
+*** copies of this, you, the Licensee, agree to abide by the following
+*** conditions and understandings with respect to the copyrighted software:
+*** 
+*** 1.  The software is copyrighted by Indiana University (IU) and 
+*** Aart J.C. Bik and they retain ownership of the software.
+*** 
+*** 2.  Permission to use and modify this software and its documentation
+*** for education, research, and non-profit purposes is hereby granted to
+*** Licensee, provided that the copyright notice, the original author's
+*** names and unit identification, and this permission notice appear on
+*** all such works, and that no charge be made for such copies.
+*** 
+*** 3. Any entity desiring permission to incorporate this software into
+*** commercial products should contact:
+*** 
+*** Dennis Gannon                          gannon@cs.indiana.edu
+*** 215 Lindley Hall
+*** Department of Computer Science
+*** Indiana University
+*** Bloomington, IN 47405-4101 USA
+*** 
+*** 4.  Licensee may not use the name, logo, or any other symbol of
+*** IU nor the names of any of its employees nor any adaptation thereof
+*** in advertising or publicity pertaining to the software without
+*** specific prior written approval of the IU.
+*** 
+*** 5.  THE COPYRIGHT HOLDERS MAKE NO REPRESENTATIONS ABOUT THE SUITABILITY 
+*** OF THE SOFTWARE FOR ANY PURPOSE.  IT IS PROVIDED "AS IS" WITHOUT EXPRESS
+*** OR IMPLIED WARRANTY.
+*** 
+*** 6.  The copyright holders shall not be liable for any damages suffered 
+*** by Licensee from the use of this software.
+*** 
+*** 7.  The software was developed under agreements between the IU and
+*** the Federal Government which entitle the Government to certain rights.
+***
+*** Your courtesy in mentioning the use of this bytecode compiler in any scientific 
+*** work that presents results obtained by using (extensions or modifications
+*** of) this bytecode compiler is highly appreciated. 
+***
+*** This project has been supported by DARPA under contract
+*** ARPA F19628-94-C-0057 through a subcontract from Syracuse University
+***
