@@ -1,0 +1,1 @@
+This folder conains the preliminary results of the tests performed using scripts in the ../scripts folder.
