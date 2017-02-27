@@ -28,7 +28,7 @@ Following tests were performed with a fixed matrix size of 1000x1000 for both th
 [![Server thread-time][3]][3]
 [![Summary][4]][4]
 
-The scripts used to take these samples and generate the graphs are given in the scripts folder. You can use these scripts to generate the graphs on your machine for varying problem sizes and number of threads.
+The scripts used to take these samples and generate the graphs are given in the scripts folder. You can use these scripts to generate the graphs on your machine for varying problem sizes and number of threads. Graphs were generated using [Scilab](https://www.scilab.org/) scripts by reading the csv files that were sampled using bash scripts.
 [1]: https://github.com/saqibahmed515/javab-agent/blob/master/48_threads_multi_dim.png
 [2]: https://github.com/saqibahmed515/javab-agent/blob/master/laptop_dev_jvm.png
 [3]: https://github.com/saqibahmed515/javab-agent/blob/master/server_dev_jvm.png
