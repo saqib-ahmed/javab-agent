@@ -8,12 +8,20 @@ The analysis of the bytecode heavily relies on an open source bytecode paralleli
 Although there is bit of an overhead for runtime analysis. But the parallelization analysis mechanism provided in the [JAVAB](http://www.aartbik.com/JAVAB/) tackles the problem of runtime overhead beautifully. It does a very minimal necessary analysis with an assumption that "Nothing is parallelizable in general". It does a very brief and to the point analysis to determine parallelizability potential in the bytecode. 
 On the bright side, runtime analysis provides some extra profiling information of the executing code which can be incorporated with the analysis to make it more subtle and efficient. For example, parallelizing all the loops (parallelizable) actually gives an overhead instead of speeding up the program. If we can manage to use the profiler information for hotspots in the code, we'll be able to analyse less (reducing analysis overhead) and parallelize only the potential code which is consuming longer time on CPU (Hotspot recognition is still in progress).
 
+###Proposed Features
+1. Automatically detect implicit loop parallelizabilty in the bytecode. (Done)
+2. Automatically exploit the parallel loops by dividing them in multiple threads. (Done)
+3. Provide a feedback about non-parallelizable loops and determine the cause of non-parallelizability. (Done)
+4. Parallelize user annotated loops without analysis. (Under Progress)
+5. Leverage the runtime information of profiler to analyse only the hotspots in the code. (Under Progress)
+
 ###Building the Code
 First, you'll have to edit the Makefile for for the correct path of jvmti.h and jni.h header files. Edit the variables `JVMTI_PATH` and `JVMTI_PATH_LINUX` to set the path to your respective JDK directory.
 Building the code is pretty straight forward afterwards. Simply execute the following command in the main repository directory:
 ```Bash
 make
 ```
+You should have GNU make installed as a prerequisite.
 ###Using the Agent
 ```Bash
 java -agentpath:/path/to/agent test.class
