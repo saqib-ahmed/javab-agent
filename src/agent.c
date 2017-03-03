@@ -293,13 +293,19 @@ static void JNICALL
 cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env) {
 	int i = 0;
 	for (i = 0; i < num_workers; i++) {
-		char *buffer = (char *) make_mem(strlen(worker_array[i])+6u);
+		char *buffer = (char *) make_mem(strlen(worker_array[i]) + 6u);
 		sprintf(buffer, "rm -f %s", worker_array[i]);
 		system(buffer);
 		if (worker_array[i] != NULL)
 			free(worker_array[i]);
 		worker_array[i] = NULL;
+
+		if (buffer != NULL) {
+			free(buffer);
+			buffer = NULL;
+		}
 	}
+
 	if(worker_array!= NULL)
 		free(worker_array);
 	worker_array=NULL;
