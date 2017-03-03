@@ -290,9 +290,21 @@ cbVMInit(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
 // Callback function for JVM death. This is the last function executed
 // in an agent.
 static void JNICALL
-cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
-{
-        gdata->vmDead = JNI_TRUE;		// Marking VM death event for safe code execution.
+cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env) {
+	int i = 0;
+	for (i = 0; i < num_workers; i++) {
+		char *buffer = (char *) make_mem(strlen(worker_array[i])+6u);
+		sprintf(buffer, "rm -f %s", worker_array[i]);
+		system(buffer);
+		if (worker_array[i] != NULL)
+			free(worker_array[i]);
+		worker_array[i] = NULL;
+	}
+	if(worker_array!= NULL)
+		free(worker_array);
+	worker_array=NULL;
+
+	gdata->vmDead = JNI_TRUE;// Marking VM death event for safe code execution.
 }
 
 

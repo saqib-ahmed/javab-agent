@@ -419,13 +419,12 @@ typedef struct bb_node *bb_ptr;
 
 /* main.c 
    ****** */
-
 extern u1_int my_not;
 extern u1_int s_disassem, s_basic, s_par, s_stack;
 extern u1_int s_linking,  s_query, s_nest;
 extern u1_int error_1;
 extern u4_int n_par,      n_nest,  n_loop, n_triv, class_len;
-extern unsigned char* new_class_ptr;
+extern u1_int* new_class_ptr;
 extern int worker_flag;
 extern char* PATH;
 u1_int query(void);
@@ -499,6 +498,7 @@ void dump_classfile(FILE *);
 
 /* par.c 
    ***** */
-
+extern char** worker_array;
+extern u4_int num_workers;
 void output_workers(char *);
 void parallelize_loop(attribute_ptr, loop_ptr, u1_int *);

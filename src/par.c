@@ -31,6 +31,8 @@
 /* ********************************************************
  *** EXTERNAL VARIABLES                               ***
  ******************************************************** */
+u4_int num_workers = 0u;
+char** worker_array;
 
 /* PRIVATE
  ******* */
@@ -825,14 +827,20 @@ void output_workers(char *filename) {
 	for (; scan; scan = scan->next) {
 
 		char *simple = cut_pre(scan->qualified_name);
-		u2_int len = 8u + pl + strlen(simple);
+		u2_int len = 11u + strlen(simple);
 		char *filen = (char *) make_mem(len*sizeof(char));
 		FILE *newfile = NULL;
 
-		if (PATH)
-			sprintf(filen, "%s/%s.class", PATH, simple);
-		else
-			sprintf(filen, "%s.class", simple);
+
+		sprintf(filen, "/tmp/%s.class", simple);
+
+		if(num_workers==0)
+			worker_array = (char**) malloc(100);
+
+		worker_array[num_workers] = (char*)make_mem(len*sizeof(char));
+		strcpy(worker_array[num_workers],filen);
+		num_workers++;
+
 
 		javab_out(2, "  + worker `%s' (simple `%s')", scan->qualified_name,
 				simple);
