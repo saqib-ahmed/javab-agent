@@ -24,7 +24,7 @@ make
 You should have GNU make installed as a prerequisite.
 ###Using the Agent
 ```Bash
-java -agentpath:/path/to/agent test.class
+java -agentpath:/path/to/agent -cp /tmp:/your/class/path test.class
 ```
 ###Preliminary Tests
 Some tests were performed on various machines with varying processor cores for the matrix multiplication code in java. The results are self explanatory. These tests were performed with threads-time and problem_size-time perspectives.
