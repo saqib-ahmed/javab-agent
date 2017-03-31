@@ -38,7 +38,9 @@ typedef struct {
 	JNIEnv * jni;
 	jboolean vm_is_started;
 	jboolean vmDead;
-
+	char ** file_list;
+ 	int list_index;
+    
 	/* Data access Lock */
 	jrawMonitorID lock;
 	JavaVM* jvm;
@@ -111,30 +113,55 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 			char* signature = NULL;
 			char* generic_ptr = NULL;
 
-			err = (*jvmti)->GetMethodName(jvmti, method, &name, &signature,
-					&generic_ptr);
+			err = (*jvmti)->GetMethodName(jvmti, method, &name, &signature,	&generic_ptr);
 			check_jvmti_error(jvmti, err, "Get Method Name");
 
 			err = (*jvmti)->GetMethodDeclaringClass(jvmti, method, &klass);
 			check_jvmti_error(jvmti, err, "Get Declaring Class");
 
-			err = (*jvmti)->GetClassSignature(jvmti, klass,
-					&className, NULL);
+			err = (*jvmti)->GetClassSignature(jvmti, klass,	&className, NULL);
 			check_jvmti_error(jvmti, err, "Cannot get class signature");
 
-
-			if (strstr(className, "java") == NULL
+			if (strstr(className, "java") == NULL && strstr(className, "jdk") == NULL
 					&& strstr(className, "javax") == NULL
 					&& strstr(className, "sun") == NULL && compiled_loaded_flag == 1) {
-				compiled_loaded_flag++;
+				
+		
+			// checking class name in list, if the list is not empty
+		
+ 				int file_found = 0, a=0;
+    				int index = gdata->list_index;
+				while(a <index){
+					if(strcmp(gdata->file_list[a], className) == 0){ //name is found  in list
+					file_found=1;					
+					break;
+					}	
+				a++;		
+				}
+				
+				if(file_found == 0){
+					char * n =(char *) make_mem(strlen(className)+1);
+					gdata->file_list[index] = n;
+					strcpy(gdata->file_list[index], className);	
+					gdata->list_index++;
+					compiled_loaded_flag++;					
+		
+#if DEBUG
+         printf("Our JVMTI- compiled_method_load for class : %s and method %s Selected for Analysis\n",className, name);    	
+#endif
+				
+
 
 #ifdef COMP_FLAG
+
 				// This is the main function call here which invokes the
 				// Class_File_Load_Hook to do the analysis and, henceforth,
 				// instrumentation of the code.
 				err = (*jvmti)->RetransformClasses(jvmti, 1, &klass);
 				check_jvmti_error(jvmti, err, "Retransform class");
 #endif
+
+				}
 			}
 
 			// Freeing the allocated memory.
@@ -183,21 +210,22 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 
             // Sift only the user classes from the class pool, excluding the library classes.
 #ifdef COMP_FLAG
-            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
-					&& strstr(name, "javax") == NULL COMP_FLAG) {
+            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
+					&& strstr(name, "javax") == NULL && compiled_loaded_flag == 2) {
 #else
 			if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
 								&& strstr(name, "javax") == NULL) {
 #endif
 
 #if DEBUG
-				int nargs = 5;
-            	char* args = "vdopq";
+		int nargs = 5;
+            	char* args = "vnopq";
 #else
             	int nargs = 3;
             	char* args = "opq";
 #endif
 
+		
             	// Get system class path to dump the output woker files later.
 				err = (*jvmti_env)->GetSystemProperty(jvmti_env, property_1,
 						&value_ptr);
@@ -206,11 +234,9 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 //				strcpy(PATH, value_ptr);
 #if DEBUG
 				printf("Analyzing class: %s\n", name);
-
-	            printf("Class path is: %s\n", PATH);
-	            printf("Vlaue_ptr is: %s\n", value_ptr);
+				printf("Class path is: %s\n", PATH);
+	         //   printf("Vlaue_ptr is: %s\n", value_ptr);
 #endif
-
 
 				err = (*jvmti_env)->GetSystemProperty(jvmti_env, property_2,
 						&value_ptr_2);
@@ -272,9 +298,11 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 #endif
 
 #ifdef COMP_FLAG
-				compiled_loaded_flag++;
+				compiled_loaded_flag=1;
 #endif
 			}
+			
+
 		}
 	}exitCriticalSection(jvmti_env);
 }
@@ -351,8 +379,10 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 	jint res;
 
 	memset((void*) &data, 0, sizeof(data));
+	data.list_index =0 ;	
+	data.file_list = make_mem(3000 * sizeof(char *));	
 	gdata = &data;
-
+ 
 	gdata->jvm = jvm;
 
 	res = (*jvm)->GetEnv(jvm, (void **) &jvmti, JVMTI_VERSION_1_0);
@@ -415,8 +445,8 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 #endif
 
 	callbacks.CompiledMethodLoad = &compiled_method_load; /* JVMTI_COMPILED_METHOD_LOAD */
-    callbacks.VMInit = &cbVMInit;                         /* JVMTI_EVENT_VM_INIT */
-    callbacks.VMDeath = &cbVMDeath;                       /* JVMTI_EVENT_VM_DEATH */
+    	callbacks.VMInit = &cbVMInit;                         /* JVMTI_EVENT_VM_INIT */	
+ 	callbacks.VMDeath = &cbVMDeath;                       /* JVMTI_EVENT_VM_DEATH */
 	callbacks.ClassFileLoadHook = &Class_File_Load_Hook;  /* JVMTI_EVENT_CLASS_FILE_LOAD_HOOK */
 
 	error = (*jvmti)->SetEventCallbacks(jvmti, &callbacks,
@@ -427,5 +457,6 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 	error = (*jvmti)->CreateRawMonitor(jvmti, "agent lock", &(gdata->lock));
 	check_jvmti_error(jvmti, error, "Create raw Monitor");
 
+	
 	return JNI_OK;
 }

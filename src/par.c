@@ -835,7 +835,7 @@ void output_workers(char *filename) {
 		sprintf(filen, "/tmp/%s.class", simple);
 
 		if(num_workers==0)
-			worker_array = (char**) malloc(500);
+			worker_array = (char**) malloc(2000);
 
 		worker_array[num_workers] = (char*)make_mem(len*sizeof(char));
 		strcpy(worker_array[num_workers],filen);

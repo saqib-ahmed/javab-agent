@@ -28,11 +28,11 @@
 #include <limits.h>
 
 // Control Switches
-#define DEBUG 0
-#define DEBUG_THREADS 0
+#define DEBUG 1
+#define DEBUG_THREADS 1
 //#define DEBUG_LOOP
 #define AUTO_QUERY
-//#define COMP_FLAG && compiled_loaded_flag==2		//Uncomment for profiler feedback
+#define COMP_FLAG && compiled_loaded_flag==2		//Uncomment for profiler feedback
 
 
 #define MAX(a,b)   (((a)>=(b)) ? (a) : (b))
