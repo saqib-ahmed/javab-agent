@@ -122,9 +122,9 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 			err = (*jvmti)->GetClassSignature(jvmti, klass,	&className, NULL);
 			check_jvmti_error(jvmti, err, "Cannot get class signature");
 
-			if (strstr(className, "java") == NULL && strstr(className, "jdk") == NULL
+			if (/*strstr(className, "java") == NULL && strstr(className, "jdk") == NULL
 					&& strstr(className, "javax") == NULL
-					&& strstr(className, "sun") == NULL && compiled_loaded_flag == 1) {
+					&& strstr(className, "sun") == NULL && */compiled_loaded_flag == 1) {
 				
 		
 			// checking class name in list, if the list is not empty
@@ -210,8 +210,8 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 
             // Sift only the user classes from the class pool, excluding the library classes.
 #ifdef COMP_FLAG
-            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
-					&& strstr(name, "javax") == NULL && compiled_loaded_flag == 2) {
+            if (name!=NULL && /*strstr(name, "java") == NULL && strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
+					&& strstr(name, "javax") == NULL &&*/ compiled_loaded_flag == 2) {
 #else
 			if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
 								&& strstr(name, "javax") == NULL) {
@@ -339,6 +339,10 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env) {
 	worker_array=NULL;
 
 	gdata->vmDead = JNI_TRUE;// Marking VM death event for safe code execution.
+#if DEBUG
+	fclose(stdout);
+	fclose(stderr);
+#endif
 }
 
 
@@ -384,7 +388,13 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 	gdata = &data;
  
 	gdata->jvm = jvm;
-
+#if DEBUG
+	char log_name[32]; 
+        snprintf(log_name, sizeof(char) * 32, "/tmp/agentLog%i.txt", (int)getpid());
+	
+	freopen(log_name, "w", stdout);
+	freopen(log_name, "w", stderr);
+#endif
 	res = (*jvm)->GetEnv(jvm, (void **) &jvmti, JVMTI_VERSION_1_0);
 
 	if (res != JNI_OK || jvmti == NULL) {
