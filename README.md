@@ -45,3 +45,61 @@ Following tests were performed with a fixed matrix size of 1000x1000 for both th
 ![Summary](https://github.com/saqibahmed515/javab-agent/blob/master/summary_above_14_threads.png)
 
 The scripts used to take these samples and generate the graphs are given in the scripts folder. You can use these scripts to generate the graphs on your machine for varying problem sizes and number of threads. Graphs were generated using [Scilab](https://www.scilab.org/) scripts by reading the csv files that were sampled using bash scripts.
+
+## System Specs:
+
+### Server:
+```
+Architecture:      	x86_64
+CPU op-mode(s):    	32-bit, 64-bit
+Byte Order:        	Little Endian
+CPU(s):            	48
+On-line CPU(s) list:   	0-47
+Thread(s) per core:	2
+Core(s) per socket:	12
+Socket(s):         	2
+NUMA node(s):      	2
+Vendor ID:         	GenuineIntel
+CPU family:        	6
+Model:             	63
+Model name:        	Intel(R) Xeon(R) CPU E7-4830 v3 @ 2.10GHz
+Stepping:          	4
+CPU MHz:           	1200.091
+CPU max MHz:       	2700.0000
+CPU min MHz:       	1200.0000
+BogoMIPS:          	4189.90
+Virtualization:    	VT-x
+L1d cache:         	32K
+L1i cache:         	32K
+L2 cache:          	256K
+L3 cache:          	30720K
+NUMA node0 CPU(s): 	0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46
+NUMA node1 CPU(s): 	1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47
+```
+### Laptop
+```
+Architecture:      	x86_64
+CPU op-mode(s):    	32-bit, 64-bit
+Byte Order:        	Little Endian
+CPU(s):            	8
+On-line CPU(s) list:   	0-7
+Thread(s) per core:	2
+Core(s) per socket:	4
+Socket(s):         	1
+NUMA node(s):      	1
+Vendor ID:         	GenuineIntel
+CPU family:        	6
+Model:             	58
+Model name:        	Intel(R) Core(TM) i7-3632QM CPU @ 2.20GHz
+Stepping:          	9
+CPU MHz:           	1203.259
+CPU max MHz:       	3200.0000
+CPU min MHz:       	1200.0000
+BogoMIPS:          	4390.03
+Virtualization:    	VT-x
+L1d cache:         	32K
+L1i cache:         	32K
+L2 cache:          	256K
+L3 cache:          	6144K
+NUMA node0 CPU(s): 	0-7
+```
