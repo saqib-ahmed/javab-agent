@@ -38,7 +38,7 @@ typedef struct {
 	JNIEnv * jni;
 	jboolean vm_is_started;
 	jboolean vmDead;
-	char ** file_list;
+	char ** class_list;
  	int list_index;
     
 	/* Data access Lock */
@@ -122,45 +122,51 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 			err = (*jvmti)->GetClassSignature(jvmti, klass,	&className, NULL);
 			check_jvmti_error(jvmti, err, "Cannot get class signature");
 
-			if (/*strstr(className, "java") == NULL && strstr(className, "jdk") == NULL
-					&& strstr(className, "javax") == NULL
-					&& strstr(className, "sun") == NULL && */compiled_loaded_flag == 1) {
-				
-		
+			if (strstr(className, "java") == NULL && strstr(className, "sun/font/SunFontManager") == NULL /*&& strstr(className, "jdk") == NULL && strstr(className, "javax") == NULL
+					&& strstr(className, "sun") == NULL*/ && compiled_loaded_flag == 1) {
+ 		
 			// checking class name in list, if the list is not empty
-		
- 				int file_found = 0, a=0;
+
     				int index = gdata->list_index;
-				while(a <index){
-					if(strcmp(gdata->file_list[a], className) == 0){ //name is found  in list
+#if DEBUG>1
+				int dis=0;
+				printf("list at compile time\n");
+				for(dis =0; dis<index;dis++){
+				printf("%s\n",gdata->class_list[dis]);
+				}		
+#endif
+				int csl= strlen(className)-1;
+				int length = csl+ strlen(name);
+		 		char * list_entry=(char *)malloc(length);
+				strncpy(list_entry, className+1, csl+1);     
+          			strcat(list_entry, name);
+
+				int file_found = 0, a=0;
+				for(a=0;a<index;a++){
+					if(strcmp(gdata->class_list[a], list_entry) == 0){ //name is found  in list
 					file_found=1;					
 					break;
-					}	
-				a++;		
+					}			
 				}
-				
+ 				
 				if(file_found == 0){
-					char * n =(char *) make_mem(strlen(className)+1);
-					gdata->file_list[index] = n;
-					strcpy(gdata->file_list[index], className);	
+					
+					gdata->class_list[index] = list_entry;
+					strcpy(gdata->class_list[index], list_entry);	
 					gdata->list_index++;
 					compiled_loaded_flag++;					
 		
 #if DEBUG
-         printf("Our JVMTI- compiled_method_load for class : %s and method %s Selected for Analysis\n",className, name);    	
+         printf("Our JVMTI- compiled_method_load for class : %s and method %s Selected for Analysis \n",className, name);    
 #endif
 				
-
-
 #ifdef COMP_FLAG
-
 				// This is the main function call here which invokes the
 				// Class_File_Load_Hook to do the analysis and, henceforth,
 				// instrumentation of the code.
 				err = (*jvmti)->RetransformClasses(jvmti, 1, &klass);
 				check_jvmti_error(jvmti, err, "Retransform class");
 #endif
-
 				}
 			}
 
@@ -203,18 +209,18 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 			char* value_ptr_2 = NULL;
 			jvmtiPhase phase;
 			*new_class_data_len = 0;
-            *new_class_data     = NULL;
+            		*new_class_data     = NULL;
 
             err = (*jvmti_env)->GetPhase(jvmti_env, &phase);
             check_jvmti_error(jvmti_env, err, "Get Phase.");
 
             // Sift only the user classes from the class pool, excluding the library classes.
 #ifdef COMP_FLAG
-            if (name!=NULL && /*strstr(name, "java") == NULL && strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
-					&& strstr(name, "javax") == NULL &&*/ compiled_loaded_flag == 2) {
+            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun/font/SunFontManager") == NULL /*&& strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
+					&& strstr(name, "javax") == NULL */&& compiled_loaded_flag == 2) {
 #else
-			if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
-								&& strstr(name, "javax") == NULL) {
+		if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
+							&& strstr(name, "javax") == NULL) {
 #endif
 
 #if DEBUG
@@ -224,32 +230,35 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
             	int nargs = 3;
             	char* args = "opq";
 #endif
-
 		
             	// Get system class path to dump the output woker files later.
 				err = (*jvmti_env)->GetSystemProperty(jvmti_env, property_1,
 						&value_ptr);
 				check_jvmti_error(jvmti_env, err, "Get Class Path.");
-//				PATH = (void*) malloc(1000);
-//				strcpy(PATH, value_ptr);
-#if DEBUG
-				printf("Analyzing class: %s\n", name);
-				printf("Class path is: %s\n", PATH);
-	         //   printf("Vlaue_ptr is: %s\n", value_ptr);
-#endif
-
 				err = (*jvmti_env)->GetSystemProperty(jvmti_env, property_2,
 						&value_ptr_2);
 				check_jvmti_error(jvmti_env, err, "Get Class Path.");
 
 #if DEBUG
-				printf("Library path is: %s\n", value_ptr_2);
+				printf("Analyzing class: %s\n", name);
+				printf("Class path is: %s\n", PATH);
+	         //   printf("Vlaue_ptr is: %s\n", value_ptr);
+		//	printf("Library path is: %s\n", value_ptr_2);
 #endif
 
 				// javab_main method of JAVAB is called here. It takes the class file as
 				// a character array (C-String) in the input parameters and sets
+
 				// the global variable of the new class data.
-				javab_main(nargs, args, class_data, class_data_len);
+
+				int index= gdata->list_index;
+				printf("%s\n",gdata->class_list[index-1]);
+				char* cl;
+				char* me;
+				cl = strdup(gdata->class_list[index-1]);
+				strtok_r(cl, ";", &me );
+		
+				javab_main(nargs, args, class_data, class_data_len, me);
 
 				err = (*jvmti_env)->Allocate(jvmti_env, (jlong) global_pos,
 						&jvmti_space);
@@ -261,6 +270,26 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 				// These pointer assignments stand for the actual instrumentation of the code.
 				*new_class_data_len = (jint) global_pos;
 				*new_class_data = jvmti_space;
+
+
+				//Adding workers name into the list
+
+				int i;				
+				for(i = 0; i < num_workers; i++) {
+				// worker array is the path to worker file i.e. /tmp/<worker name>.class 
+				// have to cut /tmp/ and .class (5 from start and 6 from end)
+				// but have to add ";run" at end (4 at end)
+
+					int full_l = strlen(worker_array[i]);
+					char *classlist_entry = (char *) make_mem(full_l - 7); 
+					strncpy(classlist_entry,worker_array[i]+5, (full_l - 11));   
+          				strcat(classlist_entry, ";run");
+					
+					printf("worker %s class entry %s \n",worker_array[i], classlist_entry);
+					gdata->class_list[gdata->list_index] = classlist_entry;
+					strcpy(gdata->class_list[gdata->list_index], classlist_entry);
+					gdata->list_index++;
+				}
 
 				// Freeing the allocated memory to avoid any sort of memory leakages.
 				if (new_class_ptr != NULL) {
@@ -339,7 +368,7 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env) {
 	worker_array=NULL;
 
 	gdata->vmDead = JNI_TRUE;// Marking VM death event for safe code execution.
-#if DEBUG
+#if LOG
 	fclose(stdout);
 	fclose(stderr);
 #endif
@@ -384,16 +413,16 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 
 	memset((void*) &data, 0, sizeof(data));
 	data.list_index =0 ;	
-	data.file_list = make_mem(3000 * sizeof(char *));	
+	data.class_list = make_mem(3000 * sizeof(char *));		
 	gdata = &data;
  
 	gdata->jvm = jvm;
-#if DEBUG
+#if LOG
 	char log_name[32]; 
         snprintf(log_name, sizeof(char) * 32, "/tmp/agentLog%i.txt", (int)getpid());
 	
-	freopen(log_name, "w", stdout);
-	freopen(log_name, "w", stderr);
+	freopen(log_name, "a+", stdout);
+	freopen(log_name, "a+", stderr);
 #endif
 	res = (*jvm)->GetEnv(jvm, (void **) &jvmti, JVMTI_VERSION_1_0);
 

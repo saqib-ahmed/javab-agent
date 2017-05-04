@@ -52,6 +52,7 @@ u4_int n_par = 0u, n_nest = 0u, n_loop = 0u, n_triv = 0u, class_len = 0;
 
 int worker_flag = 0u;
 unsigned char* new_class_ptr = NULL;
+const char* HOT_METHOD = NULL;
 char* PATH = NULL;
 /* PRIVATE
  ******* */
@@ -289,9 +290,12 @@ void *more_mem(void *p, int size) {
  ******************** */
 
 void javab_main(int argc, char *argv,
-		const unsigned char* class_bytes, int class_data_len) {
+		const unsigned char* class_bytes, int class_data_len, const char * method) {
 	int i;
 	class_len = class_data_len;
+	HOT_METHOD = method;
+
+
 	/* Process Environment Variable */
 
 

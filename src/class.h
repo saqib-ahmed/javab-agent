@@ -28,8 +28,10 @@
 #include <limits.h>
 
 // Control Switches
+#define LOG 0
 #define DEBUG 1
-#define DEBUG_THREADS 0
+#define DEBUG_THREADS 1
+#define Analyze_only_hot_method 1 
 //#define DEBUG_LOOP
 #define AUTO_QUERY
 #define COMP_FLAG && compiled_loaded_flag==2		//Uncomment for profiler feedback
@@ -427,11 +429,12 @@ extern u4_int n_par,      n_nest,  n_loop, n_triv, class_len;
 extern u1_int* new_class_ptr;
 extern int worker_flag;
 extern char* PATH;
+extern const char* HOT_METHOD;
 u1_int query(void);
 void   javab_out(s1_int, char *, ...);
 void  *make_mem(int);
 void  *more_mem(void *, int);
-void javab_main(int, char* argv, const unsigned char*, int);
+void javab_main(int, char* argv, const unsigned char*, int , const char *);
 
 /* class.c 
    ******* */

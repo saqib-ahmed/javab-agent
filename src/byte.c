@@ -3631,7 +3631,9 @@ void byte_proc(void) {
 		// uncomment following line to select a single method for
 		// analysis. Here mult is selected for analysis. This can be
 		// used to analyse only hot methods.
-//		if (strstr((char*)nm, "mult") != NULL) {
+#if Analyze_only_hot_method 
+		if (strcmp((char*)nm, HOT_METHOD) == 0) {
+#endif			
 			char *this_arg_type = NULL;
 
 			/* Determine number of locals that are defined
@@ -3716,7 +3718,8 @@ void byte_proc(void) {
 			if (error_1)
 				break; /* otherwise, a list of method
 				 headers appears for switch `-d' */
-
-//		}
+#if Analyze_only_hot_method 
+		}
+#endif
 	}
 }
