@@ -122,7 +122,7 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 			err = (*jvmti)->GetClassSignature(jvmti, klass,	&className, NULL);
 			check_jvmti_error(jvmti, err, "Cannot get class signature");
 
-			if (strstr(className, "java") == NULL && strstr(className, "sun/font/SunFontManager") == NULL /*&& strstr(className, "jdk") == NULL && strstr(className, "javax") == NULL
+			if (strstr(className, "java") == NULL && strstr(className, "sun/font/SunFontManager") == NULL && strstr(className, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL /*&& strstr(className, "jdk") == NULL && strstr(className, "javax") == NULL
 					&& strstr(className, "sun") == NULL*/ && compiled_loaded_flag == 1) {
  		
 			// checking class name in list, if the list is not empty
@@ -216,7 +216,7 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 
             // Sift only the user classes from the class pool, excluding the library classes.
 #ifdef COMP_FLAG
-            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun/font/SunFontManager") == NULL /*&& strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
+            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun/font/SunFontManager") == NULL && strstr(name, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL /*&& strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
 					&& strstr(name, "javax") == NULL */&& compiled_loaded_flag == 2) {
 #else
 		if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
@@ -284,11 +284,21 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 					char *classlist_entry = (char *) make_mem(full_l - 7); 
 					strncpy(classlist_entry,worker_array[i]+5, (full_l - 11));   
           				strcat(classlist_entry, ";run");
+				
+					int a=0, f=0;
+					for(a=0;a<index;a++){
+						if(strcmp(gdata->class_list[a], classlist_entry) == 0){ //name is not found  in list
+						f=1;
+						break;
+						}	
+					}
 					
-					printf("worker %s class entry %s \n",worker_array[i], classlist_entry);
+					if(f==1){
+					//printf("worker %s class entry %s \n",worker_array[i], classlist_entry);
 					gdata->class_list[gdata->list_index] = classlist_entry;
 					strcpy(gdata->class_list[gdata->list_index], classlist_entry);
 					gdata->list_index++;
+					}					
 				}
 
 				// Freeing the allocated memory to avoid any sort of memory leakages.
