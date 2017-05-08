@@ -133,7 +133,8 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 				printf("list at compile time\n");
 				for(dis =0; dis<index;dis++){
 				printf("%s\n",gdata->class_list[dis]);
-				}		
+				}
+				printf("-------------------\n");		
 #endif
 				int csl= strlen(className)-1;
 				int length = csl+ strlen(name);
@@ -251,14 +252,45 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 
 				// the global variable of the new class data.
 
-				int index= gdata->list_index;
-				printf("%s\n",gdata->class_list[index-1]);
+				int prev_index= gdata->list_index;
 				char* cl;
 				char* me;
-				cl = strdup(gdata->class_list[index-1]);
+				cl = strdup(gdata->class_list[prev_index-1]);
 				strtok_r(cl, ";", &me );
 		
 				javab_main(nargs, args, class_data, class_data_len, me);
+
+				//Adding workers name into the list
+
+				int i;	
+				int current = prev_index;			
+				for(i = 0; i < num_workers; i++) {
+				// worker array is the path to worker file i.e. /tmp/<worker name>.class 
+				// have to cut /tmp/ and .class (5 from start and 6 from end)
+				// but have to add ";run" at end (4 at end)
+		
+					int full_l = strlen(worker_array[i]);
+					char *classlist_entry = (char *) make_mem(full_l - 7); 
+					strncpy(classlist_entry,worker_array[i]+5, (full_l - 11));   
+          				strcat(classlist_entry, ";run");
+				
+					int a=0, f=1;
+					for(a=0;a<prev_index;a++){
+						//find name in list
+						if(strcmp(gdata->class_list[a], classlist_entry) == 0){ 
+							f=0;
+							break;
+						}	
+					}
+					
+					if(f==1){
+				//	printf("worker %s class entry %s \n",worker_array[i], classlist_entry);
+					gdata->class_list[current] = classlist_entry;
+					strcpy(gdata->class_list[current], classlist_entry);
+					gdata->list_index++;
+					current++;					
+					}					
+				}
 
 				err = (*jvmti_env)->Allocate(jvmti_env, (jlong) global_pos,
 						&jvmti_space);
@@ -272,34 +304,6 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 				*new_class_data = jvmti_space;
 
 
-				//Adding workers name into the list
-
-				int i;				
-				for(i = 0; i < num_workers; i++) {
-				// worker array is the path to worker file i.e. /tmp/<worker name>.class 
-				// have to cut /tmp/ and .class (5 from start and 6 from end)
-				// but have to add ";run" at end (4 at end)
-
-					int full_l = strlen(worker_array[i]);
-					char *classlist_entry = (char *) make_mem(full_l - 7); 
-					strncpy(classlist_entry,worker_array[i]+5, (full_l - 11));   
-          				strcat(classlist_entry, ";run");
-				
-					int a=0, f=0;
-					for(a=0;a<index;a++){
-						if(strcmp(gdata->class_list[a], classlist_entry) == 0){ //name is not found  in list
-						f=1;
-						break;
-						}	
-					}
-					
-					if(f==1){
-					//printf("worker %s class entry %s \n",worker_array[i], classlist_entry);
-					gdata->class_list[gdata->list_index] = classlist_entry;
-					strcpy(gdata->class_list[gdata->list_index], classlist_entry);
-					gdata->list_index++;
-					}					
-				}
 
 				// Freeing the allocated memory to avoid any sort of memory leakages.
 				if (new_class_ptr != NULL) {
@@ -335,7 +339,7 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 				printf("\n");
 //				system("javap -c -v ~~debug_class_1753~~.class Javab_Test_Worker_main_0");
 #endif
-
+				
 #ifdef COMP_FLAG
 				compiled_loaded_flag=1;
 #endif
@@ -423,7 +427,11 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 
 	memset((void*) &data, 0, sizeof(data));
 	data.list_index =0 ;	
-	data.class_list = make_mem(3000 * sizeof(char *));		
+	data.class_list = make_mem(3000 * sizeof(char *));
+	int a;	
+	for(a=0;a< 3000;a++)
+		data.class_list[a]="-";
+			
 	gdata = &data;
  
 	gdata->jvm = jvm;

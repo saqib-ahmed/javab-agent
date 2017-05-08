@@ -198,13 +198,13 @@ u1_int query(void) {
 	u1_int res = 2u;
 
 #ifdef AUTO_QUERY
-	fprintf(stderr, "(y/n/q) => Y\n");
+//	fprintf(stderr, "(y/n/q) => Y\n");
 	return 1u;
 #endif
 
 	do {
 
-		fprintf(stderr, "(y/n/q) => ");
+//		fprintf(stderr, "(y/n/q) => ");
 		fflush(stderr);
 
 		fgets(str, 80, stdin);

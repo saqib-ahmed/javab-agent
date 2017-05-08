@@ -1192,17 +1192,17 @@ static u1_int query_array(array_ptr a) {
 					loc);
 			return 0u;
 		}
-
+#if DEBUG
 		fprintf(stderr,
 				"\n  > Queries for the %u-dimensional array parameter `%s'"
 						" in local %u\n", dim, bb_rd_sig[loc], loc);
-
+#endif
 		for (i = 0u; i < dim; i++) {
 
 			/* Recorded Query */
 
 			if (quer[i]) {
-
+#if DEBUG
 				if (pars[i] == U4MAX)
 					fprintf(stderr, "    * dim-%u: is range [0,%3i) valid?\n",
 							i + 1u, cons[i]);
@@ -1214,7 +1214,7 @@ static u1_int query_array(array_ptr a) {
 					fprintf(stderr, "    * dim-%u: is range [0,n) valid"
 							" where n = parameter in local %u?\n", i + 1u,
 							pars[i]);
-
+#endif
 				if (!query())
 					return 0u;
 			}
@@ -1864,8 +1864,10 @@ void bb_par(attribute_ptr a, u1_int *nm, u1_int *tp) {
 			 ************************************* */
 
 			if ((l->par) && (q_set) && (s_query)) {
+#if DEBUG
 				fprintf(stderr, "\n*** ");
 				javab_out(1, "Queries for method `%s%s'", nm, tp);
+#endif
 			}
 
 			if (l->par)
@@ -1898,11 +1900,13 @@ void bb_par(attribute_ptr a, u1_int *nm, u1_int *tp) {
 											l1);
 
 								if (s_query) {
+#if DEBUG
 									fprintf(stderr,
 											"\nIs storage of array parameters"
 													" %u `%s' and %u `%s' non-overlapping?\n",
 											l1, bb_rd_sig[l1], l2,
 											bb_rd_sig[l2]);
+#endif
 									if (!query()) {
 										l->par = 0u;
 										break;
