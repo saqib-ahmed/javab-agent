@@ -29,7 +29,7 @@
 
 // Control Switches
 #define LOG 0
-#define DEBUG 0
+#define DEBUG 1
 #define DEBUG_THREADS 0
 #define Analyze_only_hot_method 1 
 //#define DEBUG_LOOP

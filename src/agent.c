@@ -40,6 +40,8 @@ typedef struct {
 	jboolean vmDead;
 	char ** class_list;
  	int list_index;
+	char ** par_class_list;
+	int par_index;
     
 	/* Data access Lock */
 	jrawMonitorID lock;
@@ -121,35 +123,43 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 
 			err = (*jvmti)->GetClassSignature(jvmti, klass,	&className, NULL);
 			check_jvmti_error(jvmti, err, "Cannot get class signature");
+#if DEBUG>1 
+  printf("Our JVMTI- compiled_method_load for class : %s and method %s is hot \n",className, name);   
+#endif
+			if (strstr(className, "java") == NULL && strstr(className, "sun/font/SunFontManager") == NULL && strstr(className, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL && strstr(className, "jdk") == NULL && strstr(className, "javax") == NULL
+					&& strstr(className, "sun") == NULL && compiled_loaded_flag == 1) {
 
-			if (strstr(className, "java") == NULL && strstr(className, "sun/font/SunFontManager") == NULL && strstr(className, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL /*&& strstr(className, "jdk") == NULL && strstr(className, "javax") == NULL
-					&& strstr(className, "sun") == NULL*/ && compiled_loaded_flag == 1) {
- 		
+	 			int parF = 0, b=0;
+				int par_idx= gdata->par_index;
+				for(b=0;b<par_idx;b++){
+					if(strstr(className, gdata->par_class_list[b]) != NULL){
+				//	printf("par_class_list=%s matched some part class name %s method name %s\n",gdata->par_class_list[b],className, name);
+					parF=1;					
+					break;
+					}			
+				}
+				
+				if(parF ==0){
+
 			// checking class name in list, if the list is not empty
 
     				int index = gdata->list_index;
-#if DEBUG>1
-				int dis=0;
-				printf("list at compile time\n");
-				for(dis =0; dis<index;dis++){
-				printf("%s\n",gdata->class_list[dis]);
-				}
-				printf("-------------------\n");		
-#endif
 				int csl= strlen(className)-1;
 				int length = csl+ strlen(name);
 		 		char * list_entry=(char *)malloc(length);
 				strncpy(list_entry, className+1, csl+1);     
           			strcat(list_entry, name);
-
+			
 				int file_found = 0, a=0;
+				printf("list at compile time\n");
 				for(a=0;a<index;a++){
+					printf("%s\n",gdata->class_list[a]);
 					if(strcmp(gdata->class_list[a], list_entry) == 0){ //name is found  in list
 					file_found=1;					
 					break;
 					}			
 				}
- 				
+ 				printf("-------------------\n");
 				if(file_found == 0){
 					
 					gdata->class_list[index] = list_entry;
@@ -184,6 +194,7 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 				err = (*jvmti)->Deallocate(jvmti, (unsigned char*) generic_ptr);
 				check_jvmti_error(jvmti, err, "deallocate generic_ptr");
 			}
+		  }			
 		}
 	}
 	exitCriticalSection(jvmti);
@@ -214,19 +225,21 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 
             err = (*jvmti_env)->GetPhase(jvmti_env, &phase);
             check_jvmti_error(jvmti_env, err, "Get Phase.");
-
-            // Sift only the user classes from the class pool, excluding the library classes.
+#if DEBUG>1
+printf("Loading class: %s\n", name);
+#endif
+            // Shift only the user classes from the class pool, excluding the library classes.
 #ifdef COMP_FLAG
-            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun/font/SunFontManager") == NULL && strstr(name, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL /*&& strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
-					&& strstr(name, "javax") == NULL */&& compiled_loaded_flag == 2) {
+            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun/font/SunFontManager") == NULL && strstr(name, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL && strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
+					&& strstr(name, "javax") == NULL && compiled_loaded_flag == 2) {
 #else
 		if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
 							&& strstr(name, "javax") == NULL) {
 #endif
 
 #if DEBUG
-		int nargs = 5;
-            	char* args = "vnopq";
+		int nargs = 4;
+            	char* args = "vopq";
 #else
             	int nargs = 3;
             	char* args = "opq";
@@ -262,33 +275,22 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 
 				//Adding workers name into the list
 
-				int i;	
-				int current = prev_index;			
-				for(i = 0; i < num_workers; i++) {
-				// worker array is the path to worker file i.e. /tmp/<worker name>.class 
-				// have to cut /tmp/ and .class (5 from start and 6 from end)
-				// but have to add ";run" at end (4 at end)
-		
-					int full_l = strlen(worker_array[i]);
-					char *classlist_entry = (char *) make_mem(full_l - 7); 
-					strncpy(classlist_entry,worker_array[i]+5, (full_l - 11));   
-          				strcat(classlist_entry, ";run");
-				
+				if(num_workers !=0) {
 					int a=0, f=1;
-					for(a=0;a<prev_index;a++){
+					for(a=0;a < gdata->par_index;a++){
 						//find name in list
-						if(strcmp(gdata->class_list[a], classlist_entry) == 0){ 
+						if(strcmp(gdata->par_class_list[a], name) == 0){ 
 							f=0;
 							break;
 						}	
 					}
 					
 					if(f==1){
-				//	printf("worker %s class entry %s \n",worker_array[i], classlist_entry);
-					gdata->class_list[current] = classlist_entry;
-					strcpy(gdata->class_list[current], classlist_entry);
-					gdata->list_index++;
-					current++;					
+						char *cl = (char *) make_mem(strlen(name));
+						gdata->par_class_list[gdata->par_index] = cl;
+						strcpy(gdata->par_class_list[gdata->par_index], name);
+						printf("entry added to par_class list = %s\n",name);
+						gdata->par_index++;				
 					}					
 				}
 
@@ -431,7 +433,9 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 	int a;	
 	for(a=0;a< 3000;a++)
 		data.class_list[a]="-";
-			
+	data.par_index = 0;	
+	data.par_class_list = make_mem(30* sizeof(char *));
+		
 	gdata = &data;
  
 	gdata->jvm = jvm;
