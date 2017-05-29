@@ -1,7 +1,7 @@
 CC = gcc 	# C compiler
 
-JVMTI_PATH=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.121-1.b14.fc25.x86_64/include              
-JVMTI_PATH_LINUX=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.121-1.b14.fc25.x86_64/include/linux   
+JVMTI_PATH=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.102-1.b14.fc24.x86_64/include              
+JVMTI_PATH_LINUX=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.102-1.b14.fc24.x86_64/include/linux   
 
 WNO= -Wno-sign-compare -Wno-discarded-qualifiers -Wno-unused-parameter
 CFLAGS = -I${JVMTI_PATH} -I${JVMTI_PATH_LINUX} -fPIC -Wall -Wextra -O0 -g3 -fno-omit-frame-pointer 

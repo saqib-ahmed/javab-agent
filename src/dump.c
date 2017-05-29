@@ -51,7 +51,7 @@ static void write_u1(u1_int u) {
 
 	if (!worker_flag) {
 		if (new_pos == new_len) {
-			new_len += 100u;
+			new_len += 500u;
 
 			if (new_class_ptr)
 				new_class_ptr = (u1_int *) more_mem(new_class_ptr,

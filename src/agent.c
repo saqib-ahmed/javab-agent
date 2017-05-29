@@ -48,9 +48,10 @@ typedef struct {
 	JavaVM* jvm;
 } GlobalAgentData;
 
+#define F_LIST_LENGTH 5
 static GlobalAgentData *gdata;
 static int compiled_loaded_flag = 1;
-
+static char *f_list[F_LIST_LENGTH];
 //JVMTI Utility functions.
 
 void fatal_error(const char * format, ...) {
@@ -61,6 +62,18 @@ void fatal_error(const char * format, ...) {
 	(void) fflush(stderr);
 	va_end(ap);
 	exit(3);
+}
+
+// 1 = if not present in list
+// 0 = if present and should be filtered
+int filter_check(char * a){
+
+	int N,result=1;
+	for(N=0;N<F_LIST_LENGTH;N++){
+		if(strstr(a,f_list[N]) != NULL)
+			result=0;
+	}
+	return result;
 }
 
 void check_jvmti_error(jvmtiEnv *jvmti, jvmtiError errnum, const char *str) {
@@ -123,52 +136,54 @@ compiled_method_load(jvmtiEnv *jvmti, jmethodID method, jint code_size,
 
 			err = (*jvmti)->GetClassSignature(jvmti, klass,	&className, NULL);
 			check_jvmti_error(jvmti, err, "Cannot get class signature");
-#if DEBUG>1 
-  printf("Our JVMTI- compiled_method_load for class : %s and method %s is hot \n",className, name);   
-#endif
-			if (strstr(className, "java") == NULL && strstr(className, "sun/font/SunFontManager") == NULL && strstr(className, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL && strstr(className, "jdk") == NULL && strstr(className, "javax") == NULL
-					&& strstr(className, "sun") == NULL && compiled_loaded_flag == 1) {
 
+#if DEBUG>1 
+  			printf("Our JVMTI- compiled_method_load for class : %s and method %s is hot \n",className, name);   
+#endif
+			if (filter_check(className) && compiled_loaded_flag == 1) {
 	 			int parF = 0, b=0;
 				int par_idx= gdata->par_index;
 				for(b=0;b<par_idx;b++){
 					if(strstr(className, gdata->par_class_list[b]) != NULL){
-				//	printf("par_class_list=%s matched some part class name %s method name %s\n",gdata->par_class_list[b],className, name);
+#if DEBUG>1
+					printf("par_class_list=%s matched some part class name %s method name %s\n",
+					gdata->par_class_list[b],className, name);
+#endif
 					parF=1;					
 					break;
 					}			
 				}
-				
+	 			
 				if(parF ==0){
 
 			// checking class name in list, if the list is not empty
 
-    				int index = gdata->list_index;
-				int csl= strlen(className)-1;
-				int length = csl+ strlen(name);
-		 		char * list_entry=(char *)malloc(length);
-				strncpy(list_entry, className+1, csl+1);     
-          			strcat(list_entry, name);
-			
+    				int index = gdata->list_index;			
 				int file_found = 0, a=0;
-				printf("list at compile time\n");
+				
 				for(a=0;a<index;a++){
-					printf("%s\n",gdata->class_list[a]);
-					if(strcmp(gdata->class_list[a], list_entry) == 0){ //name is found  in list
+#if DEBUG>1
+				 	printf("class_list: %s\n",gdata->class_list[a]);
+#endif
+					if(strstr(gdata->class_list[a], className) != NULL && 
+						strstr(gdata->class_list[a], name) != NULL){
 					file_found=1;					
 					break;
 					}			
 				}
- 				printf("-------------------\n");
+ 			
+
 				if(file_found == 0){
-					
-					gdata->class_list[index] = list_entry;
-					strcpy(gdata->class_list[index], list_entry);	
+					strcpy(gdata->class_list[index], className);	
+					strcat(gdata->class_list[index], name);	
+#if DEBUG>1
+					printf("the entry saved in class_list %s\n",gdata->class_list[index]);
+#endif
 					gdata->list_index++;
 					compiled_loaded_flag++;					
 		
 #if DEBUG
-         printf("Our JVMTI- compiled_method_load for class : %s and method %s Selected for Analysis \n",className, name);    
+         			printf("Our JVMTI- compiled_method_load for class : %s and method %s Selected for Analysis \n",className, name);    
 #endif
 				
 #ifdef COMP_FLAG
@@ -223,26 +238,26 @@ Class_File_Load_Hook(jvmtiEnv *jvmti_env, JNIEnv* jni_env,
 			*new_class_data_len = 0;
             		*new_class_data     = NULL;
 
-            err = (*jvmti_env)->GetPhase(jvmti_env, &phase);
-            check_jvmti_error(jvmti_env, err, "Get Phase.");
+            		err = (*jvmti_env)->GetPhase(jvmti_env, &phase);
+            		check_jvmti_error(jvmti_env, err, "Get Phase.");
 #if DEBUG>1
-printf("Loading class: %s\n", name);
+			printf("Loading class: %s\n", name);
 #endif
             // Shift only the user classes from the class pool, excluding the library classes.
 #ifdef COMP_FLAG
-            if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun/font/SunFontManager") == NULL && strstr(name, "jdk/internal/org/objectweb/asm/MethodWriter") == NULL && strstr(name, "sun") == NULL && strstr(name, "jdk") == NULL
-					&& strstr(name, "javax") == NULL && compiled_loaded_flag == 2) {
+            		if (name!=NULL && compiled_loaded_flag == 2) {
 #else
-		if (name!=NULL && strstr(name, "java") == NULL && strstr(name, "sun") == NULL
-							&& strstr(name, "javax") == NULL) {
+			if (name!=NULL ){
 #endif
+				if( filter_check(name) && 
+				check_valid_CP(class_data, class_data_len) ){
 
 #if DEBUG
-		int nargs = 4;
-            	char* args = "vopq";
+				int nargs = 4;
+        	    		char* args = "vopq";
 #else
-            	int nargs = 3;
-            	char* args = "opq";
+		            	int nargs = 3;
+        		    	char* args = "opq";
 #endif
 		
             	// Get system class path to dump the output woker files later.
@@ -255,9 +270,6 @@ printf("Loading class: %s\n", name);
 
 #if DEBUG
 				printf("Analyzing class: %s\n", name);
-				printf("Class path is: %s\n", PATH);
-	         //   printf("Vlaue_ptr is: %s\n", value_ptr);
-		//	printf("Library path is: %s\n", value_ptr_2);
 #endif
 
 				// javab_main method of JAVAB is called here. It takes the class file as
@@ -266,30 +278,27 @@ printf("Loading class: %s\n", name);
 				// the global variable of the new class data.
 
 				int prev_index= gdata->list_index;
-				char* cl;
+				char* cmplt_entry;
 				char* me;
-				cl = strdup(gdata->class_list[prev_index-1]);
-				strtok_r(cl, ";", &me );
+				cmplt_entry = strdup(gdata->class_list[prev_index-1]);
+				strtok_r(cmplt_entry, ";", &me );
 		
 				javab_main(nargs, args, class_data, class_data_len, me);
 
 				//Adding workers name into the list
-
+				int par_idx = gdata->par_index;
 				if(num_workers !=0) {
 					int a=0, f=1;
-					for(a=0;a < gdata->par_index;a++){
+					for(a=0;a < par_idx ;a++){
 						//find name in list
-						if(strcmp(gdata->par_class_list[a], name) == 0){ 
+						if(strstr(gdata->par_class_list[a], name) == 0){ 
 							f=0;
 							break;
 						}	
 					}
 					
 					if(f==1){
-						char *cl = (char *) make_mem(strlen(name));
-						gdata->par_class_list[gdata->par_index] = cl;
-						strcpy(gdata->par_class_list[gdata->par_index], name);
-						printf("entry added to par_class list = %s\n",name);
+						strcpy(gdata->par_class_list[par_idx], name);
 						gdata->par_index++;				
 					}					
 				}
@@ -341,7 +350,7 @@ printf("Loading class: %s\n", name);
 				printf("\n");
 //				system("javap -c -v ~~debug_class_1753~~.class Javab_Test_Worker_main_0");
 #endif
-				
+				}
 #ifdef COMP_FLAG
 				compiled_loaded_flag=1;
 #endif
@@ -430,12 +439,33 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
 	memset((void*) &data, 0, sizeof(data));
 	data.list_index =0 ;	
 	data.class_list = make_mem(3000 * sizeof(char *));
+			
 	int a;	
-	for(a=0;a< 3000;a++)
-		data.class_list[a]="-";
+	for(a=0;a< 3000;a++){
+		char *list_entry = (char *) make_mem(150* sizeof(char));
+		data.class_list[a]= list_entry;	
+	}
+
 	data.par_index = 0;	
 	data.par_class_list = make_mem(30* sizeof(char *));
 		
+	for(a=0;a< 30;a++){
+		char *ent = (char *) make_mem(150* sizeof(char));
+		data.par_class_list[a]= ent;	
+	}
+	
+// filter stuff with names
+	char * f0 = "java";
+	char * f1 = "jdk";
+	char * f2 = "javax";
+	char * f3 = "sun";
+	char * f4 = "org/eclipse/jdt/internal";
+	f_list[0] = f0;	
+	f_list[1] = f1;	
+	f_list[2] = f2;	
+	f_list[3] = f3;
+	f_list[4] = f4;	
+
 	gdata = &data;
  
 	gdata->jvm = jvm;

@@ -78,11 +78,14 @@ static constant_ptr *shadow_cp = NULL;
  **************************************** */
 
 static u1_int read_u1(void) {
+
 	if (SIZE < class_len) {
 		u1_int ret = file[SIZE];
+//printf(" %02x  ",ret);
 		SIZE++;
 		return ret;
-	}
+	}else
+	printf("SIZE %d class_len %d\n",SIZE,class_len);
 
 	return 0;
 }
@@ -99,6 +102,84 @@ static u4_int read_u4(void) {
 	u1_int u3 = read_u1();
 	u1_int u4 = read_u1();
 	return B2U4(u1, u2, u3, u4);
+}
+
+int check_valid_CP(const unsigned char* class_bytes, int class_data_len){
+
+	class_len = class_data_len;
+	file = class_bytes;	
+
+	magic = read_u4();
+
+	if (magic != 0xCAFEBABE) {
+		javab_out(0, "not a class file");
+		return 0;
+	}
+
+	read_u2();
+	read_u2();
+	u4_int i, j; /* wide counters */
+
+	constant_pool_count = 	read_u2();
+
+	if (constant_pool_count == 0u)	
+		return 0;
+
+	u1_int tag;
+	for (i = 1u; i < constant_pool_count; i++) {
+		tag = read_u1();
+
+		switch (tag) {
+
+		case CONSTANT_Class:
+		case CONSTANT_String:
+			
+			read_u2();
+			break;
+
+		case CONSTANT_Fieldref:
+		case CONSTANT_Methodref:
+		case CONSTANT_InterfaceMethodref:
+		case CONSTANT_NameAndType:
+			read_u2();
+			read_u2();
+			break;
+
+		case CONSTANT_Integer:
+		case CONSTANT_Float:
+
+			read_u4();
+			break;
+
+		case CONSTANT_Long:
+		case CONSTANT_Double:
+
+			read_u4();
+			read_u4();
+			++i;
+			break;
+
+		case CONSTANT_Utf8:
+
+			/* Read-in constant string value (represented as BYTE sequence) */
+		{
+			u2_int len = read_u2();
+			u1_int *s = (u1_int *) make_mem((1 + len) * sizeof(u1_int));
+
+			for (j = 0u; j < len; j++)
+				s[j] = read_u1();
+			s[len] = '\0';
+		}
+			break;
+
+		default:
+			javab_out(-1, "invalid constant pool tag (%u) -- constant pool count %d i %d \n",tag,constant_pool_count,i);
+			SIZE=0;	
+			return 0;
+		}
+	}
+SIZE=0;
+return 1;
 }
 
 /* Read Constant Pool
@@ -122,6 +203,10 @@ static void read_constant_pool(void) {
 	constant_pool[0] = NULL;
 
 	for (i = 1u; i < constant_pool_count; i++) {
+
+		if(error_1 == 1){
+			break;
+		}
 
 		constant_pool[i] = (constant_ptr) make_mem(
 				sizeof(struct constant_node));
@@ -285,7 +370,7 @@ static void read_methods(void) {
 /* Read Class-File
  *************** */
 
-static void read_classfile(void) {
+static  void read_classfile(void) {
 
 	javab_out(2, " -- reading class file");
 

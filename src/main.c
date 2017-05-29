@@ -126,12 +126,12 @@ static void process(void) {
 	filename = NULL;
 #endif
 
-	process_classfile(class_file, 0u); /* read   */
-	process_classfile(NULL, 1u); /* verify */
-
-	make_shadow_cp();
+	process_classfile(class_file, 0u);//read
 
 	if (!error_1) {
+		process_classfile(NULL, 1u); /* verify */
+
+		make_shadow_cp();
 
 		if (s_csum) {
 			javab_out(2, " -- class file summary output");
@@ -179,6 +179,7 @@ static void process(void) {
 		output_workers(filename);
 
 	elim_shadow_cp();
+
 }
 
 /* ********************************************************
@@ -260,8 +261,10 @@ void javab_out(s1_int level, char *fmt, ...) {
 
 	va_end(argv);
 
-	if (level < 0)
-		exit(1);
+	if (level < 0){
+	//	exit(1);
+		error_1=1;
+	}	
 }
 
 /* Memory Allocation Functions

@@ -434,6 +434,7 @@ u1_int query(void);
 void   javab_out(s1_int, char *, ...);
 void  *make_mem(int);
 void  *more_mem(void *, int);
+int check_valid_CP(const unsigned char*, int );
 void javab_main(int, char* argv, const unsigned char*, int , const char *);
 
 /* class.c 
