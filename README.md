@@ -9,11 +9,11 @@ Although there is bit of an overhead for runtime analysis. But the parallelizati
 On the bright side, runtime analysis provides some extra profiling information of the executing code which can be incorporated with the analysis to make it more subtle and efficient. For example, parallelizing all the loops (parallelizable) actually gives an overhead instead of speeding up the program. If we can manage to use the profiler information for hotspots in the code, we'll be able to analyse less (reducing analysis overhead) and parallelize only the potential code which is consuming longer time on CPU (Hotspot recognition is still in progress).
 
 ## Proposed Features
-1. Automatically detect implicit loop parallelizabilty in the bytecode. (Done)
-2. Automatically exploit the parallel loops by dividing them in multiple threads. (Done)
-3. Provide a feedback about non-parallelizable loops and determine the cause of non-parallelizability. (Done)
-4. Parallelize user annotated loops without analysis. (Under Progress)
-5. Leverage the runtime information of profiler to analyse only the hotspots in the code. (Under Progress)
+1. Automatically detect implicit loop parallelizabilty in the bytecode.
+2. Automatically exploit the parallel loops by dividing them in multiple threads. 
+3. Provide a feedback about non-parallelizable loops and determine the cause of non-parallelizability.
+4. ~Parallelize user annotated loops without analysis.~
+5. Leverage the runtime information of profiler to analyse only the hotspots in the code.
 
 ## Building the Code
 First, you'll have to edit the Makefile for for the correct path of jvmti.h and jni.h header files. Edit the variables `JVMTI_PATH` and `JVMTI_PATH_LINUX` to set the path to your respective JDK directory.
