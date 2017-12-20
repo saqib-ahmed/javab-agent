@@ -46,6 +46,39 @@ Following tests were performed with a fixed matrix size of 1000x1000 for both th
 
 The scripts used to take these samples and generate the graphs are given in the scripts folder. You can use these scripts to generate the graphs on your machine for varying problem sizes and number of threads. Graphs were generated using [Scilab](https://www.scilab.org/) scripts by reading the csv files that were sampled using bash scripts.
 
+## Final Results:
+Following tests were performed finally to see some real world benchmarks in actions. All of these tests were performed on the said server.
+
+| Benchmark/Application   | Tests/ Programs    | 
+| :-------------: |:-------------:| 
+| Dacapo      | Avrora, batik, jython, luindex, lusearch, sunflow | 
+| Scimark      | FFT, SOR, montecarlo, SparseMat Mult, LU      |  
+| Specjvm08  | Compress, crypto_aes, crypto_rsa, derby, mpegaudio, sunflow      |   
+| Processing  |  AccelrationwithVectors, AnimatedSprite, BlurFilter, Brownian, DepthSort, EdgeDetection, Flocking, Follow3, GravitationalAttraction3D, HashMapClass, MultipleParticle System, Reach3, Reflection, Sequentital-animation, tickle      |  
+| Hadoop based examples  |  Fast wavelet transform, wavelet packet transform, word median, word mean, word count      |  
+| Java Grande  |  Crypt, Euler, FFT, HeapSort, LU Fact, MolDyn, Monte Carlo, Ray Tracer, Search, Series, SOR, Sparse Mat Mult      |  
+| DSP  |  wavFilterFisher, TestPolynomialRootFinder, TestDft, TestIirFilterDesignRandom, irfilterTransferBandpas, IirFilterResponsePlotFisherLowpas      |  
+
+### 2D FFT
+The example code we have used, randomly initializes matrix of given size to random integer values and then performs 2D FFT on it in nested loops. 2D FFT calculation with our agent shows significant improvement in performance as the matrix size grows. The loops that were parallelized were nested and computation of real and imaginary parts was done in it. Due to the parallelization of computational work, we see improvement factor also increases from 4-30 times as the image size increase.
+
+![2D FFT](https://github.com/saqibahmed515/javab-agent/blob/master/results/2D_FFT.png)
+
+### Crimmins Speckle Removal
+It is implemented in 32 nested loops and each iterates over the whole image, checks and modifies the image according to values. The analysis fails in “array reference chasing”, which verifies that the accessed indices of an array are within bounds, across the iterations of the loop. The minor change in source code was to start the index variable of loop with 1 making lowest array index within bounds. Each condition gave us a target nested loop to parallelize, which created threads equal to number of processors. The “Xprof” output of the program shows that the target function takes most of the time in interpreted as well as in compiled mode. Following graph shows some mixed behavior in performance for Crimmins. We can observe that above 3000 matrix size, parallelization based speedup varies from 1-5 times.
+
+![Crimmins Speckle Removal](https://github.com/saqibahmed515/javab-agent/blob/master/results/crimmins.png)
+
+### Hough Transform
+The Hough transform is a technique, which can be used to isolate features of a particular shape within an image such as lines, circles, ellipses, etc. The original source had multiple loops but the main computational loop failed due to data dependence. The target nested loop initializes the matrix by calling `Color.black.getRGB()` and assigning a single constant number. The reason for failing was function call which was replaced by a single constant number, thus making those loops parallelizable. This is a simple example of source, which has initialization rather than any computation in the loop. Following figure shows the unsteady results of Hough test. In this case, parallel execution time remains slightly less or equal to serial.
+
+![Hough](https://github.com/saqibahmed515/javab-agent/blob/master/results/Hough.png)
+
+### Gaussian Smoothing
+The Gaussian smoothing is used to blur images and remove detail and noise by convolving the image with Gaussian kernel. The main computation loop occurs when convolution of Gaussian filter kernel is done with the chunks of image. The failing condition was data dependence across the iteration due to read and write over same variable. This convolution mechanism was changed in source code. The target loops, which are parallelized, contain the convolution of the kernel filter and a part of image. The “Xprof” output the program also show the function that performs convolution became hotspot and got compiled. Following figure shows no improvement in the parallel version of Gaussian. As the kernel size tends to be smaller in many practical implementations, the amount of computation that is parallelized is small, resulting in no prominent improvement.
+
+![Gaussian](https://github.com/saqibahmed515/javab-agent/blob/master/results/Gaussian.png)
+
 ## System Specs:
 
 ### Server:
